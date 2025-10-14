@@ -1,154 +1,85 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>PWA Leaflet Data GIS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Peta DMA & Pipa Gianyar</title>
 
-  <!-- Framework7 & Leaflet CDN -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@6.4.3/framework7-bundle.min.css">
+  <!-- Framework7 CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@8.3.2/framework7-bundle.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/framework7@8.3.2/framework7-bundle.min.js"></script>
+
+  <!-- Leaflet CDN -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Favicon / Icon -->
+  <link rel="icon" href="assets/icon-192.png" />
 
   <style>
-    #map { height: 100%; width: 100%; }
-    .page-content { padding: 0; }
-    .geojson-list { max-height: 250px; overflow:auto; }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
+  <!-- App Root -->
   <div id="app">
     <div class="view view-main">
-      <div class="page">
+      <div class="page" data-name="home">
         <div class="navbar">
           <div class="navbar-inner">
-            <div class="title">Peta GIS (Leaflet PWA)</div>
-            <div class="right">
-              <a class="link icon-only panel-open" data-panel="right">
-                <i class="icon f7-icons">menu</i>
-              </a>
-            </div>
+            <div class="title">Peta DMA & Pipa Gianyar</div>
           </div>
         </div>
-
         <div class="page-content">
           <div id="map"></div>
-        </div>
-
-        <!-- Panel kanan -->
-        <div class="panel panel-right panel-cover">
-          <div class="block-title">Layer</div>
-          <div class="block">
-            <div class="list simple-list">
-              <ul>
-                <li>
-                  <label class="item-checkbox">
-                    <input type="checkbox" id="osmToggle" checked>
-                    <i class="icon icon-checkbox"></i>
-                    <div class="item-content">OpenStreetMap</div>
-                  </label>
-                </li>
-                <li>
-                  <label class="item-checkbox">
-                    <input type="checkbox" id="pipaToggle" checked>
-                    <i class="icon icon-checkbox"></i>
-                    <div class="item-content">Pipa</div>
-                  </label>
-                </li>
-                <li>
-                  <label class="item-checkbox">
-                    <input type="checkbox" id="dmaToggle" checked>
-                    <i class="icon icon-checkbox"></i>
-                    <div class="item-content">DMA</div>
-                  </label>
-                </li>
-              </ul>
-            </div>
-
-            <button id="fitAllBtn" class="button button-fill" style="margin-top:10px;">Tampilkan Semua</button>
-          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- JS -->
-  <script src="https://cdn.jsdelivr.net/npm/framework7@6.4.3/framework7-bundle.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
-    const app = new Framework7({ root: '#app' });
-
-    // Inisialisasi peta
-    const map = L.map('map', {
-      center: [115.28342627834547, -8.50352709844032],
-      zoom: 5
+    // Inisialisasi Framework7
+    const app = new Framework7({
+      root: '#app',
+      name: 'Peta Gianyar',
+      id: 'com.peta.gianyar',
     });
 
-    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
+    // Inisialisasi Peta Leaflet
+    const map = L.map('map').setView([-8.536, 115.325], 12); // Titik Gianyar
+
+    // Tambahkan tile basemap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Group layer
-    const layerPipa = L.featureGroup();
-    const layerDMA = L.featureGroup();
-    const allLayers = L.featureGroup([layerPipa, layerDMA]).addTo(map);
-
-    // Fungsi load GeoJSON lokal
-    async function loadGeoJSON(url, targetLayer, style) {
+    // Fungsi untuk load GeoJSON
+    async function loadGeoJSON(file, style) {
       try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(res.status);
+        const res = await fetch(file);
         const data = await res.json();
-        L.geoJSON(data, {
-          style,
-          onEachFeature: (feature, layer) => {
-            const props = feature.properties || {};
-            const popup = Object.entries(props).map(([k,v]) => `<b>${k}</b>: ${v}`).join('<br>');
-            layer.bindPopup(popup);
-          }
-        }).addTo(targetLayer);
-        console.log(`✅ Loaded: ${url}`);
-      } catch (e) {
-        console.error(`❌ Gagal memuat ${url}`, e);
+        L.geoJSON(data, { style: style }).addTo(map);
+      } catch (err) {
+        console.error(`Gagal memuat ${file}:`, err);
       }
     }
 
-    // Load pipa.geojson (warna biru)
-    loadGeoJSON('geojson/pipa.geojson', layerPipa, {
-      color: '#0077ff',
-      weight: 2
-    });
+    // Load data DMA dan Pipa
+    loadGeoJSON('geojson/dma.geojson', { color: 'blue', weight: 2 });
+    loadGeoJSON('geojson/pipa.geojson', { color: 'red', weight: 1 });
 
-    // Load dma.geojson (warna oranye transparan)
-    loadGeoJSON('geojson/dma.geojson', layerDMA, {
-      color: '#ff6600',
-      weight: 2,
-      fillOpacity: 0.2
-    });
-
-    // Toggle layer
-    document.getElementById('osmToggle').addEventListener('change', e => {
-      e.target.checked ? map.addLayer(osmLayer) : map.removeLayer(osmLayer);
-    });
-    document.getElementById('pipaToggle').addEventListener('change', e => {
-      e.target.checked ? map.addLayer(layerPipa) : map.removeLayer(layerPipa);
-    });
-    document.getElementById('dmaToggle').addEventListener('change', e => {
-      e.target.checked ? map.addLayer(layerDMA) : map.removeLayer(layerDMA);
-    });
-
-    // Fit all button
-    document.getElementById('fitAllBtn').addEventListener('click', ()=>{
-      const bounds = allLayers.getBounds();
-      if (bounds.isValid()) map.fitBounds(bounds, { padding: [30,30] });
-    });
-
-    // Service worker
+    // Daftarkan service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered'));
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker terdaftar'))
+        .catch(err => console.error('SW gagal:', err));
     }
   </script>
 </body>
