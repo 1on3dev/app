@@ -1,0 +1,12 @@
+ .navbar.custom-solid .navbar-bg {
+    background-color: #007bff !important; /* biru solid */
+  }
+  .navbar.custom-solid .title,
+  .navbar.custom-solid .link {
+    color: white !important;
+  }
+
+      .center {
+      text-align: center;
+      padding: 20px;
+    }
