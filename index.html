@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Framework7 CDN App</title>
+
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Framework7 Core CSS via CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/framework7@7/framework7-bundle.min.css">
+  
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script>
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'images/leaflet/marker-icon-2x.png',
+      iconUrl: 'images/leaflet/marker-icon.png',
+      shadowUrl: 'images/leaflet/marker-shadow.png'
+    });
+  </script>
+  <link rel="icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f30f.png" type="image/png">
+
+<link rel="stylesheet" href="css/app.css">
+
+<!-- App Custom CSS -->
+  <style>
+
+  </style>
+</head>
+<body>
+  <!-- App root element -->
+  <div id="app">
+
+    <!-- Status bar overlay for fullscreen mode (optional) -->
+    <div class="statusbar"></div>
+
+    <!-- Main view -->
+    <div class="view view-main view-init safe-areas" data-url="/"></div>
+    </div>
+
+  <!-- Framework7 Core JS via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/framework7@7/framework7-bundle.min.js"></script>
+
+  <script>
+    // Init Framework7 App
+    const app = new Framework7({
+      el: '#app',
+      name: 'My F7 App',
+      theme: 'auto',
+      routes: [
+        {
+          path: '/',
+          url: './pages/home.html',
+        },
+        {
+          path: '/about/',
+          url: './pages/about.html',
+        },
+        {
+          path: '/contact/',
+          url: './pages/contact.html',
+        },
+           {
+          path: '/maps/',
+          url: './pages/maps.html',
+        },
+      ],
+    });
+
+    app.on('pageBeforeOut', () => {
+      if (document.activeElement) {
+        document.activeElement.blur();
+      }
+    });
+
+
+
+     // Register Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker registered ✅', reg))
+          .catch(err => console.warn('Service Worker failed 💥', err));
+      });
+    }
+
+
+document.addEventListener('page:init', function (e) {
+    let watchId = null
+
+  if (e.detail.route.path === '/maps/') {
+    console.log('🗺️ Halaman Maps di-init');
+
+    // Inisialisasi Leaflet hanya sekali
+    const map = L.map('map').setView([-8.5446, 115.3255], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker([-8.5446, 115.3255])
+      .addTo(map)
+      .bindPopup('<b>Gianyar</b><br>Bali, Indonesia.')
+      .openPopup();
+
+    // Simpan referensi map agar bisa dipakai nanti
+    e.detail.pageEl.mapInstance = map;
+    
+      // Tambahkan marker posisi kita
+      const marker = L.marker([-8.5446, 115.3255]).addTo(map);
+      marker.bindPopup('<b>Lokasi Saya</b>').openPopup();
+
+      // Simpan ke halaman
+      e.detail.pageEl.mapInstance = map;
+      e.detail.pageEl.markerInstance = marker;
+
+      // Coba ambil posisi awal user
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            map.setView([lat, lng], 16);
+            marker.setLatLng([lat, lng]);
+            console.log(`📍 Posisi awal: ${lat}, ${lng}`);
+          },
+          (err) => {
+            console.warn('⚠️ Gagal dapat lokasi awal:', err.message);
+          }
+        );
+
+        // Aktifkan tracking realtime
+        watchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            marker.setLatLng([lat, lng]);
+            map.panTo([lat, lng]);
+            console.log(`🚶 Posisi bergerak: ${lat}, ${lng}`);
+          },
+          (err) => {
+            console.warn('⚠️ Gagal update lokasi:', err.message);
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 10000
+          }
+        );
+      } else {
+        alert('Geolocation tidak didukung oleh browser kamu.');
+      }
+
+  }
+});
+
+document.addEventListener('page:afterin', function (e) {
+  if (e.detail.route.path === '/maps/') {
+    const map = e.detail.pageEl.mapInstance;
+    if (map) {
+      console.log('🔄 Halaman Maps tampil, refresh ukuran peta');
+      map.invalidateSize(); // <— ini penting!
+    }
+  }
+});
+
+
+  // Hentikan tracking saat keluar halaman
+  document.addEventListener('page:beforeout', function (e) {
+    if (e.detail.route.path === '/maps/') {
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+        console.log('🛑 Tracking lokasi dihentikan');
+        watchId = null;
+      }
+    }
+  });
+
+
+  </script>
+</body>
+</html>
