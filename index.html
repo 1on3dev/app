@@ -35,8 +35,14 @@
         <div style="height:12px"></div>
 
         <!-- ✅ kutip sudah benar -->
-        <ons-button modifier="outline large" onclick="document.getElementById('navigator').pushPage('contact.html')">
+        <ons-button modifier="large" onclick="document.getElementById('navigator').pushPage('contact.html')">
           Buka Halaman Contact
+        </ons-button>
+
+        <div style="height:12px"></div>
+
+        <ons-button modifier="large" id="subscribe">
+          Aktifkan Notifikasi
         </ons-button>
 
         <ons-card style="margin-top:16px;">
@@ -105,6 +111,10 @@
           .catch(err => console.warn('Service Worker failed 💥', err));
       });
     }
-  </script>
+    
+</script>
+<!-- Load idb dulu -->
+
+  <script src="./js/db.js"></script>
 </body>
 </html>
