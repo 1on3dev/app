@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Onsen UI - Home</title>
+
+  <!-- Onsen UI CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/onsenui/css/onsenui.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/onsenui/css/onsen-css-components.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/onsenui/js/onsenui.min.js"></script>
+  <link rel="manifest" href="manifest.json">
+
+</head>
+<body>
+
+  <!-- Navigator agar bisa berpindah antar template -->
+  <ons-navigator id="navigator" page="home.html"></ons-navigator>
+
+  <!-- 🏠 Template: Halaman Home -->
+  <template id="home.html">
+    <ons-page id="home">
+      <ons-toolbar>
+        <div class="center">Home</div>
+      </ons-toolbar>
+
+      <div style="padding:16px;">
+        <h2>Selamat Datang di Aplikasi Onsen UI</h2>
+        <p>Aplikasi ini memiliki tiga halaman: <strong>Home</strong>, <strong>Maps</strong>, dan <strong>Contact</strong>.</p>
+
+        <ons-button modifier="large" onclick="window.location.href='maps.html'">
+          Buka Halaman Maps
+        </ons-button>
+
+        <div style="height:12px"></div>
+
+        <!-- ✅ kutip sudah benar -->
+        <ons-button modifier="outline large" onclick="document.getElementById('navigator').pushPage('contact.html')">
+          Buka Halaman Contact
+        </ons-button>
+
+        <ons-card style="margin-top:16px;">
+          <div class="title">Catatan</div>
+          <div class="content">Halaman Maps menggunakan file terpisah (maps.html), sedangkan halaman Contact memakai template Onsen.</div>
+        </ons-card>
+      </div>
+    </ons-page>
+  </template>
+
+  <!-- 📇 Template: Halaman Contact -->
+  <template id="contact.html">
+    <ons-page id="contact">
+      <ons-toolbar>
+        <div class="left">
+          <ons-back-button>Kembali</ons-back-button>
+        </div>
+        <div class="center">Contact</div>
+      </ons-toolbar>
+
+      <div style="padding:16px;">
+        <ons-card>
+          <div class="title">Hubungi Kami</div>
+          <div class="content">
+            <p>Jika Anda memiliki pertanyaan, silakan hubungi kami melalui:</p>
+            <ul>
+              <li><strong>Email:</strong> info@contoh.com</li>
+              <li><strong>Telepon:</strong> +62 812-3456-7890</li>
+              <li><strong>Alamat:</strong> Gianyar, Bali</li>
+            </ul>
+          </div>
+        </ons-card>
+
+        <ons-list-title>Kirim Pesan</ons-list-title>
+        <ons-list>
+          <ons-list-item>
+            <div class="center">
+              <ons-input placeholder="Nama" float></ons-input>
+            </div>
+          </ons-list-item>
+          <ons-list-item>
+            <div class="center">
+              <ons-input placeholder="Email" float></ons-input>
+            </div>
+          </ons-list-item>
+          <ons-list-item>
+            <div class="center">
+              <ons-textarea placeholder="Pesan" rows="3" float></ons-textarea>
+            </div>
+          </ons-list-item>
+        </ons-list>
+
+        <ons-button modifier="large" style="margin-top:12px;" onclick="ons.notification.alert('Pesan terkirim!')">
+          Kirim
+        </ons-button>
+      </div>
+    </ons-page>
+  </template>
+
+  <script>
+    // Register Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker registered ✅', reg))
+          .catch(err => console.warn('Service Worker failed 💥', err));
+      });
+    }
+  </script>
+</body>
+</html>
