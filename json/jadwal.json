@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "Rapat Tim",
+    "time": 1737057600000,
+    "notified": false
+  },
+  {
+    "id": 2,
+    "title": "Pengingat Minum Obat",
+    "time": 1737061200000,
+    "notified": false
+  },
+  {
+    "id": 3,
+    "title": "Deadline Laporan",
+    "time": 1737064800000,
+    "notified": false
+  },
+  {
+    "id": 4,
+    "title": "Jadwal Olahraga",
+    "time": 1737068400000,
+    "notified": false
+  }
+]
