@@ -155,7 +155,7 @@ function iconPng(fileName) {
 }
 
 let marker; // deklarasi global
-
+let trackingEnabled = true; //deklarasi global gps
 document.addEventListener('DOMContentLoaded', () => {
   map = L.map('map').setView([-8.525014536114304, 115.32452133504778], 12);
 
@@ -447,8 +447,10 @@ document.getElementById('cameraInput').addEventListener('change', e => {
         document.getElementById('accuracy').textContent = `Akurasi: ±${accuracy} m`
 
         // Update marker ke lokasi terbaru
+        if (trackingEnabled) {
+          console.log(trackingEnabled);
         marker.setLatLng([latitude, longitude]);
-
+          }
         // Auto-center jika toggle aktif
         if (autoCenter) {
           console.log('Auto Center ' + autoCenter);
@@ -475,7 +477,7 @@ document.getElementById('cameraInput').addEventListener('change', e => {
     }
   </script>
   <script>
-      let trackingEnabled = true;
+      
     const toggleBtn = document.getElementById('gpsToggle');
     toggleBtn.addEventListener('click', () => {
       trackingEnabled = !trackingEnabled;
