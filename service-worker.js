@@ -30,3 +30,14 @@ self.addEventListener('activate', event => {
     )
   );
 });
+
+// Listen push event (untuk push notification via server nanti)
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.text() : 'Pesan default dari server';
+  event.waitUntil(
+    self.registration.showNotification('Push Notification', {
+      body: data,
+      icon: 'icon-72x72.png'
+    })
+  );
+});
