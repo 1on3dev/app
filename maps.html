@@ -74,10 +74,14 @@
     <ons-speed-dial-item id="cameraInput">
       <ons-icon icon="md-search"></ons-icon>
     </ons-speed-dial-item>
-    <ons-speed-dial-item>
-      <ons-icon icon="md-camera"  onclick="openCamera()"></ons-icon>
+    <!-- Item yang akan kita modifikasi -->
+    <ons-speed-dial-item id="camera-trigger">
+      <ons-icon icon="md-camera"></ons-icon>
     </ons-speed-dial-item>
   </ons-speed-dial>
+   <!-- Input file tersembunyi -->
+  <input type="file" id="photo-input" accept="image/*" capture="camera" style="display: none;">
+
 </ons-page>
 
 <script>
@@ -137,10 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadRES();
   loadGateValve();
   loadManometer();
-//   loadVentile();
-//   loadWO();
-    loadWMDistribusi();
-    loadPipa();
+  loadVentile();
+  loadWO();
+  loadWMDistribusi();
+  loadPipa();
 
   // Layer Control
   layerControl = L.control.layers(null, null, { collapsed: true }).addTo(map);
@@ -185,7 +189,7 @@ function loadPipa() {
             weight: .8
           }),
           onEachFeature: (f, l) => {
-            l.bindPopup(`<b>Pipa</b><br>Wilayah: ${f.properties.cabang || '-'}<br>Diameter: ${f.properties.diameter || '-'}`);
+            l.bindPopup(`<b>Pipa Transmisi Distribusi</b> <br> Id : ${f.properties.id || '-'}   <br> Diameter : ${f.properties.diameter || '-'} mm <br >Jenis Pipa : ${f.properties.jenis_pipa || '-'}<br >Kedalaman : ${f.properties.kedalaman || '-'} cm`);
           }
         });
 
@@ -210,7 +214,7 @@ function loadDMA() {
           fillOpacity: 0.5
         }),
         onEachFeature: (f, l) => {
-          l.bindPopup(`<b>DMA:</b> ${f.properties.nama_zona || f.properties.zona || '-'}`);
+          l.bindPopup(`<b>Zona ${f.properties.zona} </b>  <br> <b></b> ${f.properties.nama} `);
         }
       });
       layerControl.addOverlay(layerDMA, "DMA");
@@ -331,22 +335,22 @@ function loadManometer() {
 }
 
 
-// function loadVentile() {
-//   fetch('geojson/ventile.geojson')
-//     .then(r => r.json())
-//     .then(data => {
-//       const layerVentile = L.geoJSON(data, {
-//         pointToLayer: (f, latlng) => 
-//           L.marker(latlng, { icon: iconPng('vn.png') }),  // ikon kecil
-//         onEachFeature: (f, l) => {
-//           l.bindPopup(`<b>Ventile:</b> ${f.properties.nama || '-'}`);
-//         }
-//       });
-//       layerControl.addOverlay(layerVentile, "Ventile");
+function loadVentile() {
+  fetch('geojson/ventile.geojson')
+    .then(r => r.json())
+    .then(data => {
+      const layerVentile = L.geoJSON(data, {
+        pointToLayer: (f, latlng) => 
+          L.marker(latlng, { icon: iconPng('vn.png') }),  // ikon kecil
+        onEachFeature: (f, l) => {
+          l.bindPopup(`<b>Ventile:</b> ${f.properties.nama || '-'}`);
+        }
+      });
+      layerControl.addOverlay(layerVentile, "Ventile");
      
-//     })
-//     .catch(err => console.error('Gagal memuat ventile.geojson:', err));
-// }
+    })
+    .catch(err => console.error('Gagal memuat ventile.geojson:', err));
+}
 
 function loadWMDistribusi() {
   fetch('geojson/wmdistribusi.geojson')
@@ -365,19 +369,19 @@ function loadWMDistribusi() {
     .catch(err => console.error('Gagal memuat wmdistribusi.geojson:', err));
 }
 
-// function loadWO() {
-//   fetch('geojson/wo.geojson')
-//     .then(r => r.json())
-//     .then(data => {
-//       layerWO = L.geoJSON(data, {
-//         pointToLayer: (f, latlng) => L.marker(latlng, { icon: iconPng('wo.png') }),
-//         onEachFeature: (f, l) => {
-//           l.bindPopup(`<b>WO:</b> ${f.properties.nama || '-'}`);
-//         }
-//       });
-//       layerControl.addOverlay(layerWO, "WO");
-//     });
-// }
+function loadWO() {
+  fetch('geojson/wo.geojson')
+    .then(r => r.json())
+    .then(data => {
+      layerWO = L.geoJSON(data, {
+        pointToLayer: (f, latlng) => L.marker(latlng, { icon: iconPng('wo.png') }),
+        onEachFeature: (f, l) => {
+          l.bindPopup(`<b>WO:</b> ${f.properties.nama || '-'}`);
+        }
+      });
+      layerControl.addOverlay(layerWO, "WO");
+    });
+}
 </script>
 
 <script>
@@ -464,5 +468,52 @@ if ('geolocation' in navigator) {
 }
 </script>
 
+<script>
+  // Tunggu hingga dokumen siap
+document.addEventListener('DOMContentLoaded', function() {
+  const cameraTrigger = document.getElementById('camera-trigger');
+  const photoInput = document.getElementById('photo-input');
+
+  // Tambahkan event listener untuk speed dial item
+  cameraTrigger.addEventListener('click', function() {
+    // Memicu klik pada input file tersembunyi
+    photoInput.click();
+  });
+
+  // Tangani peristiwa "change" pada input file
+  photoInput.addEventListener('change', function(event) {
+    const file = event.target.files[0];
+
+    if (file) {
+      // Di sini Anda dapat menambahkan logika untuk mengunggah file
+      console.log('File terpilih:', file);
+      uploadPhoto(file);
+    }
+  });
+
+  // Fungsi untuk mengunggah foto
+  function uploadPhoto(file) {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    // Ganti URL ini dengan endpoint API backend Anda
+    const uploadUrl = 'http://125.162.138.4:8007/trisaktidev-iwan/gis/api/upload/upload_mobile';
+
+    fetch(uploadUrl, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Upload berhasil:', data);
+      ons.notification.alert('Foto berhasil diunggah!');
+    })
+    .catch(error => {
+      console.error('Error saat mengunggah:', error);
+      ons.notification.alert('Gagal mengunggah foto.');
+    });
+  }
+});
+</script>
 </body>
 </html>
