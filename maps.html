@@ -62,16 +62,13 @@
   </label>
 </div>
 
-
-
   <div id="map"></div>
-
     <ons-speed-dial position="bottom right" direction="up">
     <ons-fab>
       <ons-icon icon="md-menu" size="24px"></ons-icon>
     </ons-fab>
 
-    <ons-speed-dial-item id="cameraInput">
+    <ons-speed-dial-item id="search-triger">
       <ons-icon icon="md-search"></ons-icon>
     </ons-speed-dial-item>
     <!-- Item yang akan kita modifikasi -->
@@ -81,6 +78,18 @@
   </ons-speed-dial>
    <!-- Input file tersembunyi -->
   <input type="file" id="photo-input" accept="image/*" capture="camera" style="display: none;">
+
+    <!-- Dialog pencarian -->
+    <ons-dialog id="searchDialog">
+      <div style="padding: 20px; text-align: center;">
+        <p><b>Cari Pelanggan</b></p>
+        <ons-input id="nosambInput" modifier="underbar" placeholder="Masukkan Nosamb"></ons-input>
+        <p style="margin-top: 10px;">
+          <ons-button onclick="searchPelanggan()">Cari</ons-button>
+          <ons-button modifier="quiet" onclick="closeDialog()">Tutup</ons-button>
+        </p>
+      </div>
+    </ons-dialog>
 
 </ons-page>
 
@@ -513,7 +522,80 @@ document.addEventListener('DOMContentLoaded', function() {
       ons.notification.alert('Gagal mengunggah foto.');
     });
   }
+
+  console.log('diatas');
+  // === Dialog ===
+  document.getElementById('search-triger').onclick = function() {
+    document.getElementById('searchDialog').show();
+  };
+
+
+  console.log('dibawah');
+  function closeDialog() {
+    document.getElementById('searchDialog').hide();
+  }
+
+  // === Fungsi Pencarian ===
+ // === Fungsi Pencarian dari API GeoJSON ===
+async function searchPelanggan() {
+  const key = document.getElementById('nosambInput').value.trim();
+  if (!key) {
+    ons.notification.alert('Masukkan Nosamb');
+    return;
+  }
+
+  try {
+    // URL API: contoh https://1on3dev/gis/api/pelanggan/cari_pelanggan/17904
+    const url = `https://powerful-walker-hiv-mount.trycloudflare.com/1on3dev/gis/api/pelanggan/cari_pelanggan/${encodeURIComponent(key)}`;
+
+    // Fetch data GeoJSON
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const geojson = await res.json();
+
+    // Pastikan format GeoJSON valid
+    if (!geojson || !geojson.features || geojson.features.length === 0) {
+      ons.notification.alert('Data pelanggan tidak ditemukan');
+      return;
+    }
+
+    const f = geojson.features[0];
+    const lat = f.geometry.coordinates[1];
+    const lon = f.geometry.coordinates[0];
+    const nama = f.properties.nama || "Tidak diketahui";
+    const nosamb = f.properties.nosamb || key;
+
+    // Buat marker
+    const marker = L.marker([lat, lon]).addTo(map);
+
+    // Link ke Google Maps dan Street View
+    const gmaps = `https://www.google.com/maps?q=${lat},${lon}`;
+    const streetView = `https://www.google.com/maps?q=&layer=c&cbll=${lat},${lon}`;
+
+    // Popup marker
+    marker.bindPopup(`
+      <b>${nama}</b><br>
+      Nosamb: ${nosamb}<br>
+      <a href="${gmaps}" target="_blank">📍 Direct to Google Maps</a><br>
+      <a href="${streetView}" target="_blank">🚶 Street View</a>
+    `).openPopup();
+
+    map.setView([lat, lon], 18);
+    closeDialog();
+
+  } catch (err) {
+    console.error('Error fetch pelanggan:', err);
+    ons.notification.alert('Gagal mengambil data dari API');
+  }
+}
+
+
+
+
+
 });
+
+
 </script>
 </body>
 </html>
