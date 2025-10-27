@@ -94,6 +94,7 @@
 </ons-page>
 
 <script>
+
       // Ambil elemen tombol
   const backButton = document.getElementById('backHome');
 
@@ -527,7 +528,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
   }
 
-  // === Fungsi Pencarian ===
  // === Fungsi Pencarian dari API GeoJSON ===
 
    document.getElementById('btn-caripelanggan').onclick = async function() {
@@ -538,8 +538,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
     try {
-      // URL API: contoh https://1on3dev/gis/api/pelanggan/cari_pelanggan/17904
-      const url = `https://powerful-walker-hiv-mount.trycloudflare.com/1on3dev/gis/api/pelanggan/cari_pelanggan/${encodeURIComponent(key)}`;
+      // Base API default
+      let base_api = "https://ons-andy-pastor-terminal.trycloudflare.com";
+
+      // Cek apakah ada alamat API tersimpan di localStorage
+      const cekApi = localStorage.getItem('base_api');
+      if (cekApi) {
+        base_api = cekApi;
+      }
+
+      // Contoh URL: https://1on3dev/gis/api/pelanggan/cari_pelanggan/17904
+      const url = `${base_api}/1on3dev/gis/api/pelanggan/cari_pelanggan/${encodeURIComponent(key)}`;
 
       // Fetch data GeoJSON
       const res = await fetch(url);
@@ -561,9 +570,17 @@ document.addEventListener('DOMContentLoaded', function() {
       // Buat marker
       const marker = L.marker([lat, lon]).addTo(map);
 
-      // Link ke Google Maps dan Street View
-      const gmaps = `https://www.google.com/maps?q=${lat},${lon}`;
-      const streetView = `https://www.google.com/maps?q=&layer=c&cbll=${lat},${lon}`;
+// Link ke Google Maps dan Street View
+const gmaps = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+const streetView = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
+
+// Popup marker
+marker.bindPopup(`
+  <b>${nama}</b><br>
+  Nosamb: ${nosamb}<br>
+  <a href="${gmaps}" target="_blank">📍 Buka Navigasi Google Maps</a><br>
+  <a href="${streetView}" target="_blank">🚶 Lihat Street View Langsung</a>
+`).openPopup();
 
       // Popup marker
       marker.bindPopup(`
