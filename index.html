@@ -25,8 +25,8 @@
       </ons-toolbar>
 
       <div style="padding:16px;">
-        <h2>Selamat Datang di Aplikasi Onsen UI</h2>
-        <p>Aplikasi ini memiliki tiga halaman: <strong>Home</strong>, <strong>Maps</strong>, dan <strong>Contact</strong>.</p>
+        <h2>Selamat Datang di Aplikasi Web GIS Perumda Air Minum Tirta Sanjiwani</h2>
+        <p>Aplikasi ini memiliki feature MAP untuk mengetahui posisi aset dan menentukan posisi aset: <strong>Home</strong>, <strong>Maps</strong>, dan <strong>Contact</strong>.</p>
 
         <ons-button modifier="large" onclick="window.location.href='maps.html'">
           Buka Halaman Maps
@@ -45,10 +45,23 @@
           Aktifkan Notifikasi
         </ons-button>
 
+        <div style="height:12px"></div>
+
+        <ons-button modifier="large"onclick="window.location.href='pemetaan.html'">
+          Pemataan
+        </ons-button>
+
+        <div style="height:12px"></div>
+
+       <ons-button modifier="large" onclick="document.getElementById('navigator').pushPage('settingPage.html')">
+          Buka Halaman Contact
+        </ons-button>
+
         <ons-card style="margin-top:16px;">
           <div class="title">Catatan</div>
-          <div class="content">Halaman Maps menggunakan file terpisah (maps.html), sedangkan halaman Contact memakai template Onsen.</div>
+          <div class="content">Jika Terjadi error saat akses aplikasi segera hubungi divisi pemetaan atau divisi IT</div>
         </ons-card>
+
       </div>
     </ons-page>
   </template>
@@ -102,6 +115,33 @@
     </ons-page>
   </template>
 
+    <!-- 📇 Template: Halaman Contact -->
+  <template id="settingPage.html">
+    <ons-page id="settingPage">
+      <ons-toolbar>
+        <div class="left">
+          <ons-back-button>Kembali</ons-back-button>
+        </div>
+        <div class="center">Setting</div>
+      </ons-toolbar>
+
+      <div style="padding:16px;">  
+
+   <ons-list-title>Alamat API</ons-list-title>
+  <ons-list>
+    <ons-list-item>
+      <div class="center">
+        <ons-input placeholder="Alamat API" float id="api" style="width: 100%;"></ons-input>
+      </div>
+    </ons-list-item>
+  </ons-list>
+
+  <ons-button modifier="large" style="margin-top:12px;" onclick="simpanApi()">
+    Simpan
+  </ons-button>
+      </div>
+    </ons-page>
+  </template>
   <script>
     // Register Service Worker (PWA)
     if ('serviceWorker' in navigator) {
@@ -112,7 +152,32 @@
       });
     }
     
+
 </script>
+
+  <script>
+    // Saat halaman selesai dimuat
+    document.addEventListener('init', function (event) {
+      if (event.target.id === 'settingPage') {
+        const savedApi = localStorage.getItem('base_api');
+        if (savedApi) {
+          document.getElementById('api').value = savedApi;
+        }
+      }
+    });
+
+    // Fungsi simpan ke localStorage
+    function simpanApi() {
+      const api = document.getElementById('api').value.trim();
+      if (api) {
+        localStorage.setItem('base_api', api);
+        ons.notification.toast('Alamat API disimpan!', { timeout: 2000 });
+      } else {
+        ons.notification.alert('Isi dulu alamat API!');
+      }
+    }
+  </script>
+  
 <!-- Load idb dulu -->
 
   <script src="./js/db.js"></script>
