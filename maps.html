@@ -94,6 +94,13 @@
 </ons-page>
 
 <script>
+     let base_api = "https://ons-andy-pastor-terminal.trycloudflare.com";
+
+      // Cek apakah ada alamat API tersimpan di localStorage
+      const cekApi = localStorage.getItem('base_api');
+      if (cekApi) {
+        base_api = cekApi;
+      }
 
       // Ambil elemen tombol
   const backButton = document.getElementById('backHome');
@@ -498,8 +505,8 @@ document.addEventListener('DOMContentLoaded', function() {
     formData.append('photo', file);
 
     // Ganti URL ini dengan endpoint API backend Anda
-    const uploadUrl = 'http://125.162.138.4:8007/trisaktidev-iwan/gis/api/upload/upload_mobile';
-
+    const uploadUrl = `${base_api}/1on3dev/gis/api/pemetaan/uploads_mobile`;
+console.log(uploadUrl);
     fetch(uploadUrl, {
       method: 'POST',
       body: formData
