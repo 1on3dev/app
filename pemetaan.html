@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>Pemetaan — Onsen UI + Leaflet</title>
+
+  <!-- Onsen UI CSS & JS (CDN) -->
+  <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css" />
+  <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css" />
+  <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+
+  <style>
+    html, body, #app, ons-page, .content {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 360px;
+      width: 100%;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .form-row {
+      display: flex;
+      gap: 0px;
+      align-items: center;
+    }
+    .form-row > * { flex: 1; }
+    .small { flex: 0 0 140px; }
+    .map-controls { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+    .note { font-size: 0.85rem; color: #666; margin-top:6px; }
+
+    .rotate-45 {
+      transform: rotate(45deg);
+      display: inline-block; /* penting supaya rotasi bekerja dengan benar */
+    }
+  </style>
+</head>
+<body>
+  <ons-page id="mainPage">
+    <ons-toolbar>
+      <div class="left">
+        <ons-back-button id="backHome">Back</ons-back-button>
+      </div>
+      <div class="center">Maps</div>
+    </ons-toolbar>
+
+    <div style="padding:5px;">
+      <ons-card>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+
+          <div style="flex:0 0 220px; display:flex; gap:8px;">
+            <ons-button id="btnLocate" modifier="quiet">
+              <ons-icon icon="md-navigation" size="24px" class="rotate-45"></ons-icon>
+            </ons-button>
+            <ons-button id="btnCenter" modifier="quiet">  
+              <ons-icon icon="md-center-focus-weak" size="24px"></ons-icon>
+            </ons-button>
+          </div>
+        </div>
+
+        <div id="map" style="margin-top:10px;"></div>
+
+        <div class="map-controls" style="margin-top:10px;">
+          <ons-button id="btnPlaceMarker" modifier="outline"><ons-icon icon="md-pin-drop"></ons-icon> Add Marker</ons-button>
+          <ons-button id="btnRemoveMarker" modifier="outline"><ons-icon icon="md-delete"></ons-icon> Delete Marker</ons-button>
+        </div>
+
+   <div class="form-container" style="padding: 16px; font-family: Arial, sans-serif;">
+  <h3>Form Pemetaan</h3>
+
+  <div class="form-group">
+    <label for="nama_kegiatan">Nama Kegiatan</label><br>
+    <select id="id_kegiatan" class="form-control">
+      <option value="">Memuat data...</option>
+    </select>
+  </div>
+
+
+  <div class="form-group">
+    <label for="jenis_pemetaan">Jenis Digitasi</label><br>
+    <select id="id_jenis" class="form-control">
+      <option value="">Memuat data...</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="latitude">Latitude</label><br>
+    <input type="text" id="latitude" placeholder="Latitude" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="longitude">Longitude</label><br>
+    <input type="text" id="longitude" placeholder="Longitude" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="akurasi">Akurasi</label><br>
+    <input type="text" id="akurasi" placeholder="Akurasi" class="form-control">
+  </div>
+
+    <div class="form-group">
+    <label for="ketinggian">Ketinggian</label><br>
+    <input type="text" id="ketinggian" placeholder="Ketinggian" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="catatan">Catatan</label><br>
+    <input type="text" id="catatan" placeholder="Catatan" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="surveyor">Surveyor</label><br>
+    <input type="text" id="surveyor" placeholder="Nama Surveyor" class="form-control">
+  </div>
+
+  <div class="form-group">
+    <label for="tgl_dipetakan">Tgl. Dipetakan</label><br>
+    <input type="date" id="tgl_dipetakan" class="form-control">
+  </div>
+
+  <div style="margin-top: 16px;">
+    <button id="btnSubmit" style="padding: 8px 16px;">Simpan</button>
+  </div>
+</div>
+
+
+
+
+        <div style="margin-top:12px; display:flex; gap:8px;">
+          <ons-button id="btnSave" modifier="large">Simpan (console.log JSON)</ons-button>
+          <ons-button id="btnClear" modifier="light">Clear</ons-button>
+        </div>
+      </ons-card>
+
+      <div style="margin-top:10px">
+        <ons-progress-circular indeterminate id="geoSpinner" style="display:none"></ons-progress-circular>
+      </div>
+    </div>
+  </ons-page>
+<script>
+  ons.ready(function () {
+    const selectJenis = document.getElementById('id_jenis');
+    fetch('https://ons-andy-pastor-terminal.trycloudflare.com/1on3dev/gis/api/pemetaan/jenis_pemetaan') // ganti dengan URL API kamu
+      .then(r => r.json())
+      .then(result => {
+        if (result.status && result.data) {
+          // Kosongkan isi lama
+          selectJenis.innerHTML = '<option value="">-- Pilih Jenis Digitasi --</option>';
+
+          // Tambahkan hasil API
+          result.data.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id_jenis;
+            opt.textContent = item.nama_jenis;
+            selectJenis.appendChild(opt);
+          });
+
+          // 🔹 Force re-render dropdown (cara baru tanpa ons.compile)
+          if (selectJenis._update) {
+            selectJenis._update(); // cara internal yang valid di Onsen modern
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Gagal memuat data:', err);
+        selectJenis.innerHTML = '<option value="">Gagal memuat data</option>';
+      });
+
+    const selectKegiatan = document.getElementById('id_kegiatan');
+    fetch('https://ons-andy-pastor-terminal.trycloudflare.com/1on3dev/gis/api/pemetaan/nama_kegiatan') // ganti dengan URL API kamu
+      .then(r => r.json())
+      .then(result => {
+        if (result.status && result.data) {
+          // Kosongkan isi lama
+          selectKegiatan.innerHTML = '<option value="">-- Pilih Jenis Kegiatan --</option>';
+
+          // Tambahkan hasil API
+          result.data.forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.id_kegiatan;
+            opt.textContent = item.nama_kegiatan;
+            selectKegiatan.appendChild(opt);
+          });
+
+          // 🔹 Force re-render dropdown (cara baru tanpa ons.compile)
+          if (selectKegiatan._update) {
+            selectKegiatan._update(); // cara internal yang valid di Onsen modern
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Gagal memuat data:', err);
+        selectKegiatan.innerHTML = '<option value="">Gagal memuat data</option>';
+      })
+
+  });
+
+   // ambil elemen input date
+    const inputTanggal = document.getElementById('tgl_dipetakan');
+
+    // ambil tanggal hari ini dalam format YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+
+    // set value input date
+    inputTanggal.value = today;
+</script>
+
+
+
+
+  <script>
+    // --- Inisialisasi peta ---
+    let map, marker = null;
+    const initialLatLng = [0, 0];
+    const zoomDefault = 2;
+
+    function initMap() {
+      map = L.map('map').setView(initialLatLng, zoomDefault);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      // click to place marker
+      map.on('click', function(e) {
+        placeOrMoveMarker(e.latlng);
+      });
+
+      // center button
+      document.getElementById('btnCenter').addEventListener('click', () => {
+        if (marker) {
+          map.panTo(marker.getLatLng());
+        } else {
+          map.setView([0,0], zoomDefault);
+        }
+      });
+
+      // place marker at center
+      document.getElementById('btnPlaceMarker').addEventListener('click', () => {
+        placeOrMoveMarker(map.getCenter());
+      });
+
+      document.getElementById('btnRemoveMarker').addEventListener('click', () => {
+        removeMarker();
+      });
+
+      // Place marker helper
+      function placeOrMoveMarker(latlng) {
+        if (!marker) {
+          marker = L.marker(latlng, { draggable:true }).addTo(map);
+          marker.on('dragend', onMarkerDragEnd);
+        } else {
+          marker.setLatLng(latlng);
+        }
+        map.panTo(latlng);
+        updateLatLngInputs(latlng.lat, latlng.lng);
+      }
+
+      function onMarkerDragEnd(e) {
+        const p = e.target.getLatLng();
+        updateLatLngInputs(p.lat, p.lng);
+      }
+
+      function removeMarker() {
+        if (marker) {
+          map.removeLayer(marker);
+          marker = null;
+          clearLocationInputs(keepLatLon=false);
+        }
+      }
+
+      // Expose for other functions
+      window._map_api = {
+        placeOrMoveMarker: function(lat, lon) {
+          placeOrMoveMarker(L.latLng(lat, lon));
+        },
+        removeMarker,
+      };
+    }
+
+    // --- Update input fields ---
+    function updateLatLngInputs(lat, lon, accuracy = '', altitude = '') {
+      document.getElementById('latitude').value = lat !== null ? String(lat) : '';
+      document.getElementById('longitude').value = lon !== null ? String(lon) : '';
+      if (accuracy !== '') document.getElementById('akurasi').value = String(accuracy);
+      if (altitude !== '') document.getElementById('ketinggian').value = altitude !== null ? String(altitude) : '';
+    }
+
+    function clearLocationInputs(keepLatLon = false) {
+      if (!keepLatLon) {
+        document.getElementById('latitude').value = '';
+        document.getElementById('longitude').value = '';
+      }
+      document.getElementById('akurasi').value = '';
+      document.getElementById('ketinggian').value = '';
+    }
+
+    // --- Geolocation handling ---
+    const btnLocate = document.getElementById('btnLocate');
+    const geoSpinner = document.getElementById('geoSpinner');
+
+    let geoWatchId = null;
+
+    btnLocate.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        ons.notification.alert('Geolocation tidak didukung oleh browser ini.');
+        return;
+      }
+
+      geoSpinner.style.display = 'inline-block';
+
+      // Get current position once
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          geoSpinner.style.display = 'none';
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy || '';
+          const altitude = pos.coords.altitude !== null ? pos.coords.altitude : '';
+          updateLatLngInputs(lat, lon, accuracy, altitude);
+
+          // place marker or move it
+          if (window._map_api && window._map_api.placeOrMoveMarker) {
+            window._map_api.placeOrMoveMarker(lat, lon);
+            map.setView([lat, lon], 16);
+          }
+        },
+        (err) => {
+          geoSpinner.style.display = 'none';
+          ons.notification.alert('Gagal mendapatkan lokasi: ' + err.message);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    });
+
+    // --- Save / Clear actions ---
+    document.getElementById('btnSave').addEventListener('click', () => {
+      const data = {
+        id_kegiatan: document.getElementById('id_kegiatan').value || null,
+        id_jenis: document.getElementById('id_jenis').value || null,
+        surveyor: document.getElementById('surveyor').value || null,
+        tgl_dipetakan: document.getElementById('tgl_dipetakan').value || null,
+        latitude: document.getElementById('latitude').value || null,
+        longitude: document.getElementById('longitude').value || null,
+        akurasi: document.getElementById('akurasi').value || null,
+        ketinggian: document.getElementById('ketinggian').value || null,
+        catatan: document.getElementById('catatan').value || null,
+      };
+
+      // Simple validation: latitude & longitude required
+      if (!data.latitude || !data.longitude) {
+        ons.notification.alert('Latitude & longitude belum terisi. Klik peta atau gunakan "Use current location".');
+        return;
+      }
+
+      // Show JSON in console: replace this area with fetch(...) untuk kirim ke API
+      console.log('Pemetaan tersimpan:', data);
+      ons.notification.toast('Data siap dikirim (lihat console).', { timeout: 2000 });
+
+      // Example: to send to API endpoint, uncomment and sesuaikan
+      
+      fetch('https://example.com/api/pemetaan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(r => r.json())
+      .then(res => ons.notification.alert('Tersimpan: ' + JSON.stringify(res)))
+      .catch(e => ons.notification.alert('Error: ' + e.message));
+      
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      ['id_pemetaan','id_kegiatan','id_jenis','surveyor','tgl_dipetakan','created_at','code','catatan'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      clearLocationInputs();
+      if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
+    });
+
+    // --- Onsen page init: init map when page is ready ---
+    document.addEventListener('init', function(event) {
+      if (event.target.id === 'mainPage') {
+        // initialize map once
+        if (!map) {
+          initMap();
+        }
+        // Leaflet needs invalidateSize if container shown after initialization
+        setTimeout(() => {
+          if (map) map.invalidateSize();
+        }, 300);
+      }
+    });
+
+    // If Onsen already loaded, manually init
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      // trigger init manually for single page
+      setTimeout(() => {
+        const e = new CustomEvent('init', { detail: {}, bubbles: true });
+        document.getElementById('mainPage').dispatchEvent(e);
+      }, 50);
+    }
+  </script>
+  <!-- jQuery library -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.slim.min.js"></script>
+
+<!-- Popper JS -->
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
